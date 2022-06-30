@@ -4,49 +4,53 @@ const phoneNumbers = [
   19842068287, 15512459377, 19362072765,
 ];
 
-let currentId = null;
-let pendingUpdates = []; // [{ id: 1234, status: "ringing" }, { id: 2345, status: "ringing"} ]
+let pendingUpdates = [];
 
 const phoneCalls = phoneNumbers.map((number) => {
   return { number, id: null, status: 'idle' };
 });
 
-// {id: 1234 }
 const makeCall = async (webhookURL) => {
   if (phoneNumbers.length === 0) {
-    console.log(phoneCalls);
-    console.log('All calls have completed');
     return;
   }
-  const phone = phoneNumbers.shift();
-  const body = { phone: String(phone), webhookURL };
+  const phoneNumber = phoneNumbers.shift();
+  const body = { phone: String(phoneNumber), webhookURL };
   const id = await callsService.makeCall(body);
-  console.log(phoneCalls);
-  console.log(pendingUpdates);
-  // update phonecall id
-  const updateCallId = phoneCalls.find(
-    (phoneCall) => phoneCall.number === phone && !phoneCall.id
-  );
-  if (updateCallId) {
-    updateCallId.id = id;
-  }
-  // update phoncall status
+  updatePhoneCallId(phoneNumber, id);
+  makeCallHelper(webhookURL);
+};
+
+const makeCallHelper = (webhookURL) => {
   if (pendingUpdates.length > 0) {
     pendingUpdates.forEach((update) => {
       console.log(phoneCalls);
       const phoneCall = phoneCalls.find(
         (phoneCall) => phoneCall.id === update.id
       );
-      updateCallStatus(phoneCall, update.status, webhookURL);
+      updateCallStatus(phoneCall, update.status);
+      continueCall(phoneCall, webhookURL);
     });
     pendingUpdates = [];
   }
 };
 
-const updateCallStatus = (phoneCall, status, webhookURL) => {
+const updatePhoneCallId = (phoneNumber, id) => {
+  const updateCallId = phoneCalls.find(
+    (phoneCall) => phoneCall.number === phoneNumber && !phoneCall.id
+  );
+  if (updateCallId) {
+    updateCallId.id = id;
+  }
+};
+
+const updateCallStatus = (phoneCall, status) => {
   if (phoneCall.status !== 'completed') {
     phoneCall.status = status;
   }
+};
+
+const continueCall = (phoneCall, webhookURL) => {
   if (phoneCall.status === 'completed') {
     makeCall(webhookURL);
   }
@@ -70,7 +74,8 @@ const receiveWebhook = (req, res, next) => {
   if (!updateCall) {
     pendingUpdates.push(req.body);
   } else {
-    updateCallStatus(updateCall, status, req.webhookURL);
+    updateCallStatus(updateCall, status);
+    continueCall(updateCall, req.webhookURL);
   }
 
   return res.json({ message: 'received' });
