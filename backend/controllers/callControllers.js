@@ -4,27 +4,6 @@ const phoneNumbers = [
   19842068287, 15512459377, 19362072765,
 ];
 
-/*
-13018040009
-
-19842068287
-
-15512459377
-
-19362072765
-
-18582210308
-
-13018040009
-
-19842068287
-
-15512459377
-
-19362072765
-
-*/
-
 let currentId = null;
 let pendingUpdates = []; // [{ id: 1234, status: "ringing" }, { id: 2345, status: "ringing"} ]
 
@@ -58,14 +37,18 @@ const makeCall = async (webhookURL) => {
       const phoneCall = phoneCalls.find(
         (phoneCall) => phoneCall.id === update.id
       );
-      if (phoneCall.status !== 'completed') {
-        phoneCall.status = update.status;
-      }
-      if (phoneCall.status === 'completed') {
-        makeCall(webhookURL);
-      }
+      updateCallStatus(phoneCall, update.status, webhookURL);
     });
     pendingUpdates = [];
+  }
+};
+
+const updateCallStatus = (phoneCall, status, webhookURL) => {
+  if (phoneCall.status !== 'completed') {
+    phoneCall.status = status;
+  }
+  if (phoneCall.status === 'completed') {
+    makeCall(webhookURL);
   }
 };
 
@@ -81,19 +64,13 @@ const initializeCalls = (req, res, next) => {
   return res.json({ message: 'Calls initialized' });
 };
 
-// { "id": 2345, "status": "answered"
 const receiveWebhook = (req, res, next) => {
   const { id, status } = req.body;
   const updateCall = phoneCalls.find((phoneCall) => phoneCall.id === id);
   if (!updateCall) {
     pendingUpdates.push(req.body);
   } else {
-    if (updateCall.status !== 'completed') {
-      updateCall.status = status;
-    }
-    if (status === 'completed') {
-      makeCall(req.webhookURL);
-    }
+    updateCallStatus(updateCall, status, req.webhookURL);
   }
 
   return res.json({ message: 'received' });
