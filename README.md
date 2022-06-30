@@ -32,7 +32,7 @@ The status will either be the literal string "ringing", "answered", or "complete
 - Start the first three calls immediately with a loop
   - Shift 3 times, and make calls for each
 
-#### Webhook endpoint /webhook
+#### Webhook endpoint POST /webhook
 
 - Receives the post request from NumberDial api
 - Find the call object with given id from the array of call ojbects,

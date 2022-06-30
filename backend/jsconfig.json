@@ -1,0 +1,11 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "target": "es6",
+    "baseUrl": ".",
+    "checkJs": true,
+    "moduleResolution": "node"
+  },
+  "include": ["models/**/*", "controllers/**/*", "routes/**/*"],
+  "exclude": ["node_modules", "**/node_modules/*"]
+}
