@@ -1,15 +1,14 @@
 const routes = require('express').Router();
 const callControllers = require('../controllers/callControllers');
+const webhookURL = 'http://localhost:3001/api/webhook';
 
-const phoneNumbers = [
-  13018040009, 19842068287, 15512459377, 19362072765, 18582210308, 13018040009,
-  19842068287, 15512459377, 19362072765,
-];
-
-const phoneCalls = phoneNumbers.map((number) => {
-  return { number, id: null, status: 'idle' };
-});
+const setWebhookURL = (req, res, next) => {
+  req.webhookURL = webhookURL;
+  next();
+};
 
 routes.get('/calls', callControllers.getCalls);
+routes.post('/calls', setWebhookURL, callControllers.initializeCalls);
+routes.post('/webhook', setWebhookURL, callControllers.receiveWebhook);
 
 module.exports = routes;
