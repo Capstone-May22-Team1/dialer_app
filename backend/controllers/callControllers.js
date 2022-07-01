@@ -1,4 +1,7 @@
+const { call } = require('express');
 const callsService = require('../services/calls');
+// const EventEmitter = require('events');
+// const Stream = new EventEmitter();
 const phoneNumbers = [
   13018040009, 19842068287, 15512459377, 19362072765, 18582210308, 13018040009,
   19842068287, 15512459377, 19362072765,
@@ -7,13 +10,15 @@ const phoneNumbers = [
 let pendingUpdates = [];
 let sseResponse = null;
 
-const phoneCalls = phoneNumbers.map((number) => {
-  return { number, id: null, status: 'idle' };
+const phoneCalls = phoneNumbers.map((number, idx) => {
+  return { number, id: null, status: 'idle', idx };
 });
 
 const makeCall = async (webhookURL) => {
   if (phoneNumbers.length === 0) {
-    sseResponse.end();
+    if (phoneCalls.every((call) => call.status === 'completed')) {
+      sseResponse.end();
+    }
     return;
   }
   const phoneNumber = phoneNumbers.shift();
@@ -48,8 +53,15 @@ const updatePhoneCallId = (phoneNumber, id) => {
 const updateCallStatus = (phoneCall, status) => {
   if (phoneCall.status !== 'completed') {
     phoneCall.status = status;
-    sseResponse.write({ data: phoneCall });
+    // console.log('Updating, ', phoneCall);
+    console.log(phoneCalls);
+    sseResponse.write(stringifyEventStream(phoneCall));
   }
+};
+
+const stringifyEventStream = (data) => {
+  return 'data: ' + JSON.stringify(data) + '\n\n';
+  // 'data: ' + JSON.stringify({ msg : testdata }) + '\n\n'
 };
 
 const continueCall = (phoneCall, webhookURL) => {
@@ -64,10 +76,11 @@ const getCalls = (req, res, next) => {
 
 const initializeCalls = (req, res, next) => {
   sseResponse = res;
-  sseResponse.set({
+  sseResponse.writeHead(200, {
     'Cache-Control': 'no-cache',
     'Content-Type': 'text/event-stream',
     Connection: 'keep-alive',
+    'Access-Control-Allow-Origin': '*',
   });
   sseResponse.flushHeaders();
 
@@ -75,6 +88,11 @@ const initializeCalls = (req, res, next) => {
     const webhookURL = req.webhookURL;
     makeCall(webhookURL);
   }
+
+  // Stream.on('push', function (event, data) {
+  //   res.write(stringifyEventStream(data));
+  // });
+  // return res.json({ message: 'Starting calls' });
 };
 
 const receiveWebhook = (req, res, next) => {

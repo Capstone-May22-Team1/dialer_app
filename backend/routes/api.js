@@ -8,7 +8,7 @@ const setWebhookURL = (req, res, next) => {
 };
 
 routes.get('/calls', callControllers.getCalls);
-routes.post('/calls', setWebhookURL, callControllers.initializeCalls);
+routes.get('/initializeCalls', setWebhookURL, callControllers.initializeCalls);
 routes.post('/webhook', setWebhookURL, callControllers.receiveWebhook);
 
 module.exports = routes;
