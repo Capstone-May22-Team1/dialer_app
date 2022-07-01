@@ -5,6 +5,7 @@ const phoneNumbers = [
 ];
 
 let pendingUpdates = [];
+let sseResponse = null;
 
 const phoneCalls = phoneNumbers.map((number) => {
   return { number, id: null, status: 'idle' };
@@ -12,6 +13,7 @@ const phoneCalls = phoneNumbers.map((number) => {
 
 const makeCall = async (webhookURL) => {
   if (phoneNumbers.length === 0) {
+    sseResponse.end();
     return;
   }
   const phoneNumber = phoneNumbers.shift();
@@ -46,6 +48,7 @@ const updatePhoneCallId = (phoneNumber, id) => {
 const updateCallStatus = (phoneCall, status) => {
   if (phoneCall.status !== 'completed') {
     phoneCall.status = status;
+    sseResponse.write({ data: phoneCall });
   }
 };
 
@@ -60,11 +63,18 @@ const getCalls = (req, res, next) => {
 };
 
 const initializeCalls = (req, res, next) => {
+  sseResponse = res;
+  sseResponse.set({
+    'Cache-Control': 'no-cache',
+    'Content-Type': 'text/event-stream',
+    Connection: 'keep-alive',
+  });
+  sseResponse.flushHeaders();
+
   for (let i = 0; i < 3; i++) {
     const webhookURL = req.webhookURL;
     makeCall(webhookURL);
   }
-  return res.json({ message: 'Calls initialized' });
 };
 
 const receiveWebhook = (req, res, next) => {
