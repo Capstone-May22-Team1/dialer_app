@@ -18,13 +18,12 @@ const makeCall = async (webhookURL) => {
   const body = { phone: String(phoneNumber), webhookURL };
   const id = await callsService.makeCall(body);
   updatePhoneCallId(phoneNumber, id);
-  makeCallHelper(webhookURL);
+  updatePendingCallsStatus(webhookURL);
 };
 
-const makeCallHelper = (webhookURL) => {
+const updatePendingCallsStatus = (webhookURL) => {
   if (pendingUpdates.length > 0) {
     pendingUpdates.forEach((update) => {
-      console.log(phoneCalls);
       const phoneCall = phoneCalls.find(
         (phoneCall) => phoneCall.id === update.id
       );
