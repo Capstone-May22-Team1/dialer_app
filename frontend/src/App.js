@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import './App.css';
-import apiClient from './lib/apiClient';
+import Phonecalls from './components/Phonecalls';
 
 function App() {
   return (
@@ -9,38 +9,6 @@ function App() {
     </div>
   );
 }
-
-const Phonecalls = () => {
-  const [calls, setCalls] = useState([]);
-
-  useEffect(() => {
-    async function initialzeCall() {
-      const calls = await apiClient.initializeCalls();
-      setCalls(calls);
-    }
-    initialzeCall();
-  }, []);
-
-  return (
-    <div>
-      <ul>
-        {calls.map((call) => (
-          <Phonecall key={call.id} call={call} />
-        ))}
-      </ul>
-    </div>
-  );
-};
-
-const Phonecall = ({ call }) => {
-  return (
-    <li>
-      <p>
-        Number: {call.number}, Status: {call.status}
-      </p>
-    </li>
-  );
-};
 
 export default App;
 
